@@ -41,7 +41,13 @@
 $route['default_controller'] = "welcome";
 $route['404_override'] = '';
 $route['api/test'] = 'api/test_data';
+//admin routes
 $route['api/admin/login'] = 'admin/login';
+//jobs route
+$route['api/jobs'] = 'jobs/index'; // For viewing jobs
+$route['api/jobs/post'] = 'jobs/post'; // For posting a new job
+$route['api/jobs/(:num)'] = 'jobs/get_job/$1'; //viewing job details
+
 
 
 /* End of file routes.php */
