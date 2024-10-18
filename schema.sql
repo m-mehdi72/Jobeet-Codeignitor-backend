@@ -59,7 +59,7 @@ CREATE TABLE jobs (
     public BOOLEAN NOT NULL DEFAULT TRUE,
     email VARCHAR(150) NOT NULL,
     token VARCHAR(64) NOT NULL UNIQUE,
-    status ENUM('active', 'expired') NOT NULL DEFAULT 'active';
+    status ENUM('active', 'expired') NOT NULL DEFAULT 'active',
     created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     expires_on DATE NOT NULL,

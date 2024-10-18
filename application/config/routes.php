@@ -45,10 +45,10 @@ $route['api/test'] = 'api/test_data';
 $route['api/admin/login'] = 'admin/login';
 //jobs route
 $route['api/jobs'] = 'jobs/index'; // For viewing jobs
-$route['api/jobs/post'] = 'jobs/post'; // For posting a new job
+$route['api/jobs/post'] = 'jobs/create_job'; // For posting a new job
 $route['api/jobs/(:num)'] = 'jobs/get_job/$1'; //viewing job details
-
-
+//categories
+$route['api/categories'] = 'jobs/get_categories';
 
 /* End of file routes.php */
 /* Location: ./application/config/routes.php */
