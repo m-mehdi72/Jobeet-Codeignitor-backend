@@ -12,6 +12,28 @@ class Admin extends CI_Controller
         $this->load->library('form_validation');
     }
 
+    public function create_user() {
+
+        // Get the form input
+        $username = 'admin';
+        $password = 'admin';
+
+        // Hash the password using SHA-256
+        $hashed_password = hash('sha256', $password);
+
+        // Prepare data for insertion
+        $data = array(
+            'username' => $username,
+            'password' => $hashed_password
+        );
+
+        // Insert into admin table
+        $this->db->insert('admin', $data);
+        echo "Admin Created";
+        // Redirect or show success message
+        // Adjust according to your routing
+    }
+
     public function login()
     {
         header("Access-Control-Allow-Origin: *");
@@ -47,8 +69,6 @@ class Admin extends CI_Controller
         $admin = $this->admin_model->validate_login($username, $password);
 
         if ($admin) {
-            // If the credentials are valid, generate a token and return it
-            // $token = $this->generate_token($admin->id); // Implement your token generation logic
             // $this->session->set_userdata('is_logged_in', true);
             echo json_encode(['status' => 'success']);
         } else {
@@ -58,12 +78,4 @@ class Admin extends CI_Controller
             echo json_encode(['status' => 'error', 'message' => 'Invalid username or password.']);
         }
     }
-
-    // private function isLoggedIn()
-    // {
-    //     if (!$this->session->userdata('is_logged_in')) {
-    //         redirect('api/admin/login');
-    //     }
-    // }
-
 }

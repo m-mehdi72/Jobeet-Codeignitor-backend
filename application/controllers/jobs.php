@@ -8,6 +8,7 @@ class Jobs extends CI_Controller
     {
         parent::__construct();
         $this->load->model('jobs_model'); // Load the jobs model
+
         header("Access-Control-Allow-Origin: *");
         header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
         header("Access-Control-Allow-Headers: Content-Type");
@@ -21,18 +22,32 @@ class Jobs extends CI_Controller
         echo json_encode($jobs); // Return jobs as JSON
     }
 
-    // Method to post a new job
-    // Method to handle job posting including validation
-    public function create_job()
+    public function create_job_test()
     {
-        // At the start of the create_job function
-        // $response = array('step' => 'Received data', 'post_data' => $_POST, 'files' => $_FILES);
-        // echo json_encode($response);
-        // flush(); // Send the response immediately
-        
-        // echo json_encode('update => Beginning Validation Step');
-        // flush();
-        // Set validation rules for required fields
+        // Dummy data for testing
+
+        // error_reporting(E_ALL);
+        // ini_set('display_errors', 1);
+        $_POST = [
+            'company' => 'Data Insights Co.',
+            'position' => 'Janitor',
+            'type' => 'Full-T fdime',
+            'location' => 'Los Angeles, CA',
+            'description' => 'ewqeq',
+            'how_to_apply' => 'ewew',
+            'email' => 'jobs@jobeet.com', // This should fail validation
+            'expires_on' => '2024-11-20T11:10:05.647Z',
+            'category' => 'Accounting',
+        ];
+
+
+        // Normalize input (e.g., make 'type' lowercase)
+        $_POST['type'] = strtolower(trim($_POST['type']));
+
+        // Load the form validation library
+        $this->load->library('form_validation');
+
+        // Set validation rules
         $this->form_validation->set_rules('company', 'Company', 'required');
         $this->form_validation->set_rules('position', 'Position', 'required');
         $this->form_validation->set_rules('type', 'Type', 'required|in_list[full-time,part-time,freelance]');
@@ -43,9 +58,77 @@ class Jobs extends CI_Controller
         $this->form_validation->set_rules('expires_on', 'Expires On', 'required');
         $this->form_validation->set_rules('category', 'Category', 'required');
 
-        // echo json_encode('Form Validation step run');
-        // flush();
+        // Run validation
+        if ($this->form_validation->run() === FALSE) {
+            // Capture validation errors
+            $validation_errors = validation_errors();
+            $response = array('error' => strip_tags($validation_errors));
+            echo json_encode($response);
+        } else {
+            echo json_encode(['success' => 'Validation passed!']);
+        }
+    }
 
+    // Method to post a new job
+    // Method to handle job posting including validation
+    public function create_job()
+    {
+        error_reporting(0);  // Turn off all error reporting
+        ini_set('display_errors', 0);  // Don't display errors in the browser
+        // Get the raw JSON input
+        $json_data = file_get_contents('php://input');
+        // Decode the JSON into a PHP array
+        $data = json_decode($json_data, true);
+        $data['status'] = 1;
+        // Check if JSON data is received
+        if (!$data) {
+            echo json_encode(['error' => 'No data received']);
+            return;
+        }
+        $this->load->library('form_validation');
+        // if (isset($this->form_validation)) {
+        //     echo "Form validation library loaded successfully!";
+        // } else {
+        //     echo "Failed to load form validation library.";
+        // }
+        // echo json_encode(['data_received' => $data]);
+        // Trim all keys and values in the $data array to avoid extra spaces
+        $data = array_map('trim', $data);
+
+        // echo '<pre>';
+        // print_r($data);
+        // echo '</pre>';
+        // error_log(print_r($data, true)); // Log received data for debugging
+
+        // // Set validation rules for required fields
+        // echo "data passed";
+
+        $_POST = array(
+            'category' => $data['category'], // Category ID from DB
+            'company' => $data['company'],
+            'type' => $data['type'],
+            'position' => $data['position'],
+            'location' => $data['location'],
+            'description' => $data['description'],
+            'how_to_apply' => $data['how_to_apply'],
+            'public' => isset($data['public']) && $data['public'] ? 1 : 0, // Boolean public field
+            'email' => $data['email'],
+            'token' => bin2hex(random_bytes(32)), // Generate a unique token
+            'expires_on' => $data['expires_on'],
+            'status' => $data['status'],
+            'url' => $data['url'] // Optional field
+        );
+
+        $this->form_validation->set_rules('company', 'Company', 'required');
+        $this->form_validation->set_rules('position', 'Position', 'required');
+        $this->form_validation->set_rules('type', 'Type', 'required|in_list[full-time,part-time,freelance]');
+        $this->form_validation->set_rules('location', 'Location', 'required');
+        $this->form_validation->set_rules('description', 'Description', 'required');
+        $this->form_validation->set_rules('how_to_apply', 'How to Apply', 'required');
+        $this->form_validation->set_rules('email', 'Email', 'required|valid_email');
+        $this->form_validation->set_rules('expires_on', 'Expires On', 'required');
+        $this->form_validation->set_rules('category', 'Category', 'required');
+        // echo "Validation done";
         // Check if validation fails
         if ($this->form_validation->run() === FALSE) {
             // Return validation errors if they exist
@@ -55,19 +138,14 @@ class Jobs extends CI_Controller
         }
 
         // Retrieve the category ID by category name
-        $category_name = $this->input->post('category');
+        $category_name = $data['category'];
         $category_id = $this->jobs_model->get_category_id_by_name($category_name);
-        if (!$category_id) {
+        if (!$category_id || $category_id == NULL) {
             // If category is not found, return an error
             $response = array('error' => 'Invalid category selected.');
             echo json_encode($response);
             return;
         }
-
-        // Send response after getting category ID
-        // $response = array('step' => 'Category ID retrieved', 'category_id' => $category_id);
-        // echo json_encode($response);
-        // flush(); // Ensure the response is sent immediately
 
         // Handle file upload (optional fields: logo, url)
         $config['upload_path'] = './uploads/logos/';
@@ -94,32 +172,23 @@ class Jobs extends CI_Controller
         // Prepare job data
         $job_data = array(
             'category_id' => $category_id, // Category ID from DB
-            'company' => $this->input->post('company'),
-            'type' => $this->input->post('type'),
-            'position' => $this->input->post('position'),
-            'location' => $this->input->post('location'),
-            'description' => $this->input->post('description'),
-            'how_to_apply' => $this->input->post('how_to_apply'),
-            'public' => $this->input->post('public') ? 1 : 0, // Boolean public field
-            'email' => $this->input->post('email'),
+            'company' => $data['company'],
+            'type' => $data['type'],
+            'position' => $data['position'],
+            'location' => $data['location'],
+            'description' => $data['description'],
+            'how_to_apply' => $data['how_to_apply'],
+            'public' => isset($data['public']) && $data['public'] ? 1 : 0, // Boolean public field
+            'email' => $data['email'],
             'token' => bin2hex(random_bytes(32)), // Generate a unique token
-            'expires_on' => $this->input->post('expires_on'),
-            'status' => $this->input->post('status'),
+            'expires_on' => $data['expires_on'],
+            'status' => $data['status'],
             'logo' => $logo_url, // Optional field
-            'url' => $this->input->post('url') // Optional field
+            'url' => $data['url'] // Optional field
         );
 
-        // Send response after preparing job data
-        // $response = array('step' => 'Job data prepared', 'job_data' => $job_data);
-        // echo json_encode($response);
-        // flush(); // Ensure the response is sent immediately
-
-        // echo json_encode('Beginning database insertion');
-        // flush();
         // Insert job data into the database
         $inserted = $this->jobs_model->insert_job($job_data);
-        // echo json_encode( $inserted);
-        // flush();
 
         // Check if insertion was successful
         if ($inserted) {
@@ -140,10 +209,11 @@ class Jobs extends CI_Controller
             );
             echo json_encode($response);
         }
-        
     }
 
-    public function get_categories(){
+
+    public function get_categories()
+    {
         $categories = $this->jobs_model->get_all_categories();
         echo json_encode(array($categories));
     }

@@ -22,7 +22,7 @@
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'http://192.168.0.165';
+$config['base_url'] = 'http://dev.jobeet_sm.com:8080/';
 
 /*
 |--------------------------------------------------------------------------

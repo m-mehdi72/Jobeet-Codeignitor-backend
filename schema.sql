@@ -7,7 +7,7 @@
 -- Create the `admin_settings` table
 CREATE TABLE admin_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    key VARCHAR(100) NOT NULL UNIQUE,
+    `key` VARCHAR(100) NOT NULL UNIQUE,
     value VARCHAR(255) NOT NULL,
     updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
